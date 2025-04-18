@@ -1,0 +1,43 @@
+vcenter_hostname: "X.X.X.X"
+vcenter_username: "YOUR USERNAME"
+vcenter_password: "YOUR PASSWORD"
+
+vm_name: "TestServ"
+network_name: "DP-SERVER"
+
+datacenter_name: "UNI-DATACENTER"
+cluster_name: "Uni-Cluster"
+template_name: "WIndows2022_Template"
+vm_folder: "bordbar"
+datastore_name: "Datastore-Performance 1"
+# resource_pool: "Resources"
+
+
+hostname: "myserv"
+
+ip_address: "192.168.110.67"
+subnet_mask: "255.255.255.0"
+gateway: "192.168.110.1"
+windows_password: "YOUR WIN PASS"
+fullname_user: "Admin User"
+orgname_user: "FUMS"
+
+
+
+
+
+#==================
+installer_list:
+  - name: "Google Chrome"
+    src: "/home/linuxadmin/ansible/software/chrome-Setup.msi"
+    dest: "C:\\Temp\\chrome-Setup.msi"
+    cmd: "msiexec /i C:\\Temp\\chrome-Setup.msi /qn /norestart"
+
+  - name: "WIN RAR"
+    src: "/home/linuxadmin/ansible/software/Winrar.exe"
+    dest: "C:\\Temp\\Winrar.exe"
+    cmd: "C:\\Temp\\Winrar.exe /S"
+
+
+
+
