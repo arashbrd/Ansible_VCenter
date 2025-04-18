@@ -28,7 +28,12 @@ The playbook consists of two main parts:
 > "I created a template and before running the sysprep command, I placed two files:
 > - `PostSysprep.ps1`
 > - `SetupComplete.cmd`
-> in the path `C:\Windows\Setup\Scripts`"
+> - in the path `C:\Windows\Setup\Scripts`
+#### and
+- `setup.ps1`
+-  in the path `C:\software`"
+
+
 
 These files are executed during the Windows setup process after sysprep, allowing for custom post-deployment configurations.
 
@@ -66,3 +71,6 @@ These files are executed during the Windows setup process after sysprep, allowin
    orgname_user: MyOrg
    installer_list:
      - { name: "App1", src: "/path/to/app1.exe", dest: "C:\\Temp\\app1.exe", cmd: "C:\\Temp\\app1.exe /silent" }
+  Finally you can run the script using this command:
+  ```yaml
+ ansible-playbook -i inventory clone_vm.yml
