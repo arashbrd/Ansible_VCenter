@@ -1,0 +1,101 @@
+---
+- name: Clone VM from Template with Network Settings
+  hosts: localhost
+  gather_facts: no
+
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - name: Clone a VM from template with IP settings
+      community.vmware.vmware_guest:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        datacenter: "{{ datacenter_name }}"
+        folder: "{{ vm_folder }}"
+        name: "{{ vm_name }}"
+        template: "{{ template_name }}"
+        cluster: "{{ cluster_name }}"
+        datastore: "{{ datastore_name }}"
+        state: poweredon
+        networks:
+          - name: "{{ network_name }}"
+            ip: "{{ ip_address }}"
+            netmask: "{{ subnet_mask }}"
+            gateway: "{{ gateway }}"
+            type: static
+        customization:
+          dns_servers:
+            - 192.168.110.3
+          timezone: 160  
+          hostname: "{{ hostname }}"
+          password: "{{ windows_password }}"
+          fullname: "{{ fullname_user }}"
+          orgname: "{{ orgname_user }}"
+          runonce:
+            # - 'cmd.exe /c shutdown -r -t 5'
+            - 'powershell.exe -ExecutionPolicy Bypass -File "C:\\software\\setup.ps1"'
+        wait_for_ip_address: true
+      register: deploy_result     
+      delegate_to: localhost
+
+    - name: Set IP of new VM as fact
+      set_fact:
+        new_vm_ip: "{{ deploy_result.instance.ipv4 }}"
+
+    - name: Add new VM to in-memory inventory
+      add_host:
+        name: "{{ new_vm_ip }}"
+        groups: dynamic_windows
+        ansible_user: "Administrator"
+        ansible_password: "{{ windows_password }}"
+        ansible_connection: winrm
+        ansible_winrm_transport: ntlm
+        ansible_winrm_server_cert_validation: ignore
+        ansible_winrm_port: 5985        
+    
+
+- name: Install Windows software from Ansible
+  hosts: dynamic_windows
+  gather_facts: false
+  vars_files:
+    - vars.yml
+
+  tasks:  
+  - name: Create Temp directory on Windows
+    ansible.windows.win_file:
+      path: C:\Temp
+      state: directory
+
+  - name: Copy and install software
+    block:
+      - name: Copy {{ item.name }} installer to Windows
+        ansible.windows.win_copy:
+          src: "{{ item.src }}"
+          dest: "{{ item.dest }}"
+        loop: "{{ installer_list }}"
+        register: install_result
+
+
+      # - name: Debug the installation result
+      #   debug:
+      #     var: install_result
+
+      - name: Install {{ item.name }} silently
+        ansible.windows.win_command: "{{ item.cmd }}"
+        loop: "{{ installer_list }}"
+
+      - name: Remove the Temp directory entirely
+        ansible.windows.win_file:
+          path: C:\Temp
+          state: absent
+
+      - name: Add Persian (Farsi) keyboard layout via PowerShell
+        ansible.windows.win_shell: |
+          # Add Persian (Iran) language and keyboard layout
+          $LangList = Get-WinUserLanguageList
+          $FarsiLang = New-WinUserLanguageList -Language "fa-IR"
+          $LangList.Add($FarsiLang[0])
+          Set-WinUserLanguageList -LanguageList $LangList -Force
